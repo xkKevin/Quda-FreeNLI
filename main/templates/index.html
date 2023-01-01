@@ -1,0 +1,449 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>FreeNLI</title>
+
+	<link href="{% static 'css/bootstrap3.3.7.min.css' %}" rel="stylesheet">
+    <script src="{% static 'js/jquery.min.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/echarts.min.js' %}"></script>
+
+    <link rel="stylesheet" href="{% static 'css/bootstrap-select.min.css' %}" />
+    <script src="{% static 'js/bootstrap-select.min.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/bootstrap3.3.7.min.js' %}"></script>
+	<script type="text/javascript" src="{% static 'js/vischart_layering.js' %}"></script>
+
+    <link href="{% static 'css/ladda-themeless.min.css' %}" rel="stylesheet">
+    <script type="text/javascript" src="{% static 'js/spin.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/ladda.min.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/table.js' %}"></script>
+    <script src="https://pv.sohu.com/cityjson?ie=utf-8"></script>
+    <style>
+        #nlp_text {
+            -moz-appearance: textfield;
+            -webkit-appearance: textfield;
+            background-color: white;
+            box-shadow: 1px 1px 1px 0 lightgray inset;
+            padding: 7px 12px;
+            height: 40px;
+            font-size: 17px;
+            overflow-x: hidden;
+            white-space: nowrap;
+        }
+        /*为空时显示 element attribute content*/
+        #nlp_text:empty:before{
+            content: attr(placeholder);   /* element attribute*/
+            /*content: 'this is content';*/
+            color: #9997a7;
+            cursor: text;
+        }
+        /*焦点时内容为空
+        #nlp_text:focus:before{
+            content:none;
+        }
+        */
+        #nlp_text b {
+            color:#111111;
+            opacity: 0.95;
+        }
+        .glyphicon-chevron-up, .glyphicon-chevron-down {
+            font-size: 10px;
+            margin-left: 3px;
+        }
+        #table td,th{
+            padding-left: 6px;
+            padding-right: 15px;
+            line-height: 2.15;
+            font-size: 15px;
+            height: 28px;
+            cursor: default;
+        }
+        #bgImg {
+            height: 170px;
+            width: 100%;
+            background: url('{% static 'image/banner.png' %}');
+            background-size: 100% 100%;
+        }
+        #systemName{
+            font-size:30px;
+            font-weight:600;
+            color:rgba(255,255,255,1);
+            line-height:32px;
+            margin-top: 20px;
+            {#position: relative;#}
+            {#left: -50px;#}
+        }
+        #query_group{
+            margin-top: 25px;
+            background:rgba(255,255,255,1);
+            opacity:0.9;
+            height: 40px;
+        }
+        #analyse_btn{
+            background-color: rgba(105,115,255,1);
+            border-color: rgba(105,115,255,1);
+            border-radius: 0;
+        }
+        #analyse_span{
+            width:64px;
+            height:19px;
+            font-size:17px;
+            font-weight:bold;
+            color:rgba(255,255,255,1);
+            line-height:19px;
+            padding: 10px 20px;
+        }
+        #select_span{
+            font-size:20px;
+            font-weight:bold;
+            color:rgba(17,17,17,1);
+            line-height: 38px;
+            vertical-align: middle;
+        }
+        .vis_chart{
+            width: 674px;
+            height: 406px;
+            display: inline-block;
+            padding-right: 10px;
+        }
+        .panel-heading{
+            background: rgb(226,227,255);
+            font-weight: bold;
+            font-size: 15px;
+            line-height: 1;
+        }
+        .panel-body{
+            width: 670px;
+            padding:0;
+            {#position: relative;#}
+            top: -8px;
+            left: -8px;
+            overflow: hidden;
+        }
+        .btn-sm{
+            padding: 1px 3px;
+        }
+        .btn {
+            border-radius: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="bgImg">
+        <div class="container">
+            <div id="systemName">FreeNLI</div>
+            <div class="input-group" id="query_group">
+                <div id="nlp_text" contenteditable onkeyup="detectColums($(this));" style="opacity: 0.85;"
+                    placeholder='What do you want to know about the data?'></div>
+                <label class="btn input-group-addon ladda-button" data-style="zoom-out" id="analyse_btn" onclick="nlpAnalyse()">
+                    <span id="analyse_span">Analyse</span>
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="margin-top: 16px;">
+        <div id="select_span">Select Table</div>
+        <div style="position: relative;">
+            <span style="">
+                <span id="tables_len" class="hidden">{{ tables_name | length }}</span>
+                <select id="select_table" class="selectpicker" onchange="selectTable()">
+                    {% for tn in tables_name %}
+{#                        {% if forloop.counter0 == 0 %}#}
+                        {% if current_table == "" %}
+                            {% if forloop.counter0 == 0 %}
+                                <option value="{{ tn }}" selected>{{ tn }}</option>
+                            {% else %}
+                                <option value="{{ tn }}">{{ tn }}</option>
+                            {% endif %}
+                        {% else %}
+                            {% if tn == current_table %}
+                                <option value="{{ tn }}" selected>{{ tn }}</option>
+                            {% else %}
+                                <option value="{{ tn }}">{{ tn }}</option>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </span>
+            <span id="tableheader" style="position: absolute; right: 0">
+                <span class="search">
+                    <select id="columns" onchange="sorter.search('query')" class="selectpicker"></select>
+                    <input type="text" id="query" onkeyup="sorter.search('query')" placeholder="Search" autocomplete="off" style="height: 34px; width: 178px; padding-left: 3px;"/>
+                </span>
+{#                <input type="text" id="task_id" placeholder="task id" style="width: 55px; height: 34px;" autocomplete="off">#}
+            </span>
+        </div>
+        <div style="margin-top: 10px;" id="tablewrapper">
+            <table class="table-bordered" align="center" id="table" style="width: 100%;">
+                <thead>
+                    <tr style="background:rgba(246,244,255,1);">
+                        {% for table_column in table_columns %}
+                            <th>{{ table_column }}<span></span></th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in table_values %}
+                    <tr>
+                    {% for table_td in row %}
+                        <td>{{ table_td }}</td>
+                    {% endfor %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <div id="tablefooter" style="margin-top: 8px; margin-bottom: 15px; text-align: center;">
+                <span id="tablenav">
+                    <button class="btn btn-default btn-sm" onclick="sorter.move(-1,true)">
+                        <span class="glyphicon glyphicon-fast-backward" title="First Page"></span>
+                    </button>&nbsp;
+                    <button class="btn btn-default btn-sm" onclick="sorter.move(-1)" >
+                        <span class="glyphicon glyphicon-backward" title="Previous Page"></span>
+                    </button>&nbsp;
+                    <button class="btn btn-default btn-sm" onclick="sorter.move(1)">
+                        <span class="glyphicon glyphicon-forward" title="Next Page"></span>
+                    </button>&nbsp;
+                    <button class="btn btn-default btn-sm" onclick="sorter.move(1,true)" >
+                        <span class="glyphicon glyphicon-fast-forward" title="Last Page"></span>
+                    </button>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;<span>Go to &nbsp;<select id="pagedropdown" style="width: 50px;"></select>&nbsp; page</span>
+                    &nbsp;<span class="page txt-txt">(Page <span id="currentpage"></span> of <span id="totalpages"></span>)</span>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;<a class="button blue" href="javascript:sorter.showall()">View All</a>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;<a class="button blue" href="javascript:sorter.reset()">Reset</a>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                </span>
+                <span id="tablelocation">
+                    <span>
+                        <select onchange="sorter.size(this.value)" style="width: 50px;">
+                            <option value="10">10</option>
+                            <option value="20" selected="selected">20</option>
+                            <option value="30">30</option>
+                            <option value="50">50</option>
+                            <option value="80">80</option>
+                        </select>
+                        &nbsp;items/page
+                    </span>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;<span>Records <span id="startrecord"></span>-<span id="endrecord"></span> of <span id="totalrecords"></span></span>
+                </span>
+            </div>
+        </div>
+    </div>
+    <!-- 按钮触发模态框 -->
+<button class="hidden" data-toggle="modal" data-target="#myModal" id="build_chart"></button>
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog" style="width: 1380px">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+					<span class="glyphicon glyphicon-remove"></span>
+				</button>
+				<h4 class="modal-title" id="myModalLabel">
+                    <span id="result_task"></span>
+				</h4>
+			</div>
+			<div class="modal-body">
+                <div id="charts">
+                </div>
+            </div>
+            <!--
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">关闭
+				</button>
+				<button type="button" class="btn btn-primary">
+					提交更改
+				</button>
+			</div>
+			-->
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal -->
+</div>
+<!--
+<footer style="color: #000000;font-style: italic;text-align: center;">
+    &copy; 2020 Zhejiang Lab&middot;<br/>
+    Contact us whenever you need. Email: xkkevinbear@gmail.com
+</footer>
+-->
+    <script type="text/javascript" src="{% static 'js/freenli.js' %}"></script>
+	<script type="text/javascript">
+        var select_table = $("#select_table");
+        select_table.selectpicker({
+            width: 178
+        });
+        var select_columns = $("#columns");
+        select_columns.selectpicker({
+            width: 'auto'
+        });
+        var select_table_val = select_table.val();
+        var table_columns = {{ table_columns | safe}};
+        var selection = window.getSelection();
+        var matched_columns_name = [];
+        var loading = Ladda.create($("#analyse_btn")[0]);
+        var sorter;
+
+        function setTable(size=20){
+            sorter = new TINY.table.sorter('sorter','table',{
+                headclass: 'head', // Header Class //
+                ascclass: 'asc', // Ascending Class //
+                descclass: 'desc', // Descending Class //
+                // evenclass: 'evenrow', // Even Row Class //
+                // oddclass: 'oddrow', // Odd Row Class //
+                // evenselclass: 'evenselected', // Even Selected Column Class //
+                // oddselclass: 'oddselected', // Odd Selected Column Class //
+                paginate: true, // Paginate? (true or false) //
+                size: size, // Initial Page Size //
+                colddid: 'columns', // Columns Dropdown ID (optional) //
+                currentid: 'currentpage', // Current Page ID (optional) //
+                totalid: 'totalpages', // Current Page ID (optional) //
+                startingrecid: 'startrecord', // Starting Record ID (optional) //
+                endingrecid: 'endrecord', // Ending Record ID (optional) //
+                totalrecid: 'totalrecords', // Total Records ID (optional) //
+                hoverid: 'selectedrow', // Hover Row ID (optional) //
+                pageddid: 'pagedropdown', // Page Dropdown ID (optional) //
+                navid: 'tablenav', // Table Navigation ID (optional) //
+                sortcolumn: 0, // Index of Initial Column to Sort (optional) //
+                sortdir: -1, // Sort Direction (1 or -1) //
+                //sum: [8], // Index of Columns to Sum (optional) //
+                //avg: [6, 7, 8, 9], // Index of Columns to Average (optional) //
+                //columns: [{ index: 7, format: '%', decimals: 1 }, { index: 8, format: '$', decimals: 0}], // Sorted Column Settings (optional) //
+                init: true// Init Now? (true or false) //
+            });
+            $("#table thead tr th").click(function () {
+                $("#table thead .head span").removeClass();
+                $("#table thead .asc span").removeClass().addClass("glyphicon glyphicon-chevron-up");
+                $("#table thead .desc span").removeClass().addClass("glyphicon glyphicon-chevron-down");
+            });
+        }
+
+        function selectTable() {
+            select_table_val = select_table.val();
+            $.get({% url 'get_table' %}, {"table_name": select_table_val}, function (result, statue){
+                if(result.result){
+                    table_columns = result.table_columns;
+                    $("#table thead tr").html("<th>"+table_columns.join("<span></span></th><th>")+"<span></span></th>");
+                    let tbody = "";
+                    for (let row=0; row<result.table_values.length; row++){
+                        tbody += "<tr>";
+                        for (let v=0; v<result.table_values[row].length;v++){
+                            tbody += "<td>" + result.table_values[row][v] + "</td>";
+                        }
+                        tbody += "</tr>";
+                    }
+                    $("#table tbody").html(tbody);
+                    detectColums($("#nlp_text"));
+                    select_columns.empty();
+                    setTable($("#tablelocation select").val());
+                    select_columns.selectpicker('refresh');
+                }else{
+                    alert(result.error);
+                }
+            });
+        }
+
+        function nlpAnalyse() {
+            loading.start();
+            if (matched_columns_name.length === 0){
+                alert("Can not identify Column Name!");
+                loading.stop();
+                return false;
+            }
+            let nlp_text = $("#nlp_text").text().trim();
+            $.get({% url 'nlp_analyse' %}, {"nlp_text": nlp_text, "table_name": select_table_val, "columns_name": JSON.stringify(matched_columns_name)}, function(result, statue){
+                if (result.result){
+                    // console.log(result.charts + "\n" + result.sentence + "\n" + result.columns_name);
+                    if (result.columns_type.length){
+                        $("#result_task").text(`${nlp_text} (${result.task_name.join(", ")})`);
+                        // $("#result_task").text(result.task + result.task_name + " : " + detectColumns(result.data,  matched_columns_name, result.columns_type));
+                        for (let ti=0; ti < result.task.length; ti++)
+                            draw_charts(result.data,  matched_columns_name, result.columns_type, result.charts[ti], result.task[ti], ti);
+                        $("#build_chart").click();
+                    }else{
+                        alert("Can not identify Column Name!");
+                    }
+                }else{
+                    alert(result.error);
+                }
+                loading.stop();
+            });
+        }
+
+        function detectColums(jqObj){
+            let text_new = jqObj.text();
+            for (let i = 0; i < table_columns.length; i++) {
+                text_new = text_new.replace(new RegExp(table_columns[i], "ig"),`<b>${table_columns[i]}</b>`);
+                // i是不区分大小写；g是全局匹配
+            }
+            if (text_new !== jqObj.html().replace(new RegExp("&nbsp;", 'g'), " ")){ // 这个空格和' '不一样！！！
+                jqObj.html(text_new);
+                selection.collapse(jqObj[0],jqObj[0].childNodes.length);  // 将selection光标的位置设置为jqObj[0]标签下最后的位置
+            }
+            matched_columns_name = [];
+            let colums_b = $("#nlp_text b");
+            for (let j = 0; j < colums_b.length; j++) {
+                let cn = colums_b[j].innerText;  // 列名只添加一次
+                if (!matched_columns_name.includes(cn)){
+                    matched_columns_name.push(cn);
+                }
+            }
+        }
+
+        $(function () {
+            /*
+            $.ajax({
+                type:"get",
+                url: "https://api.live.bilibili.com/client/v1/Ip/getInfoNew",
+                //url:"https://ips.market.alicloudapi.com/iplocaltion?ip=104.238.140.142",// + returnCitySN.cip,
+                headers: {
+                    "Authorization": "APPCODE 82f760f4dd9c40a9b221fe8fb316a78d"
+                },
+                success:(data)=>{
+                    console.log(data)
+                },
+
+                beforeSend: function(xhr) {
+                        xhr.setRequestHeader("Authorization", "APPCODE " + btoa(token + ":"));
+                }
+            });
+            */
+            if (window.location.pathname.length < 2){  // 只有访问主页的时候才记录
+                $.post({% url 'access_log' %}, {"ip":returnCitySN.cip,"id":returnCitySN.cid, "location":returnCitySN.cname, 'type': 'freenli'}, function(result, statue){
+                    if (!result.result){
+                        console.log(result.error);
+                    }
+                });
+            }
+            setTable();
+            select_columns.selectpicker('refresh');
+            $("#nlp_text").css("width",$("table").outerWidth()-$("#analyse_btn").outerWidth())
+                .keypress(function (event) {
+                    if(event.keyCode === 13){
+                        nlpAnalyse();
+                        event.preventDefault();
+                    }
+                });
+            /*  设置 freeNLP 智能向左偏移
+            let distance = $("#query_group").offset().left;
+            if (distance <= 64){
+                $("#systemName").css("left",14-distance);
+            }
+            window.onresize = function(){
+                let distance = $("#query_group").offset().left;
+                if (distance <= 64){
+                    $("#systemName").css("left",14-distance);
+                }else{
+                    $("#systemName").css("left",-50);
+                }
+                //console.log($("#query_group").outerWidth());  注意，这里用query_group的宽度不行
+                $("#nlp_text").css("width",$("table").outerWidth()-$("#analyse_btn").outerWidth())
+            };
+            */
+            // $("#select_table").selectpicker({}).selectpicker('render');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <title>Sentences Classification</title>
+    <link href="{% static 'css/bootstrap3.3.7.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/ladda-themeless.min.css' %}" rel="stylesheet">
+    <script src="{% static 'js/jquery.min.js' %}" type="text/javascript"></script>
+    <script type="text/javascript" src="{% static 'js/bootstrap3.3.7.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/spin.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/ladda.min.js' %}"></script>
+    <script src="{% static 'js/echarts.min.js' %}"></script>
+
+    <style>
+        table td,th{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container" style="margin-top: 30px;">
+    <table class="table-bordered" style="width: 100%; line-height: 1.8; font-size: 14px;margin-bottom: 18px;">
+        <caption style="text-align: center;font-size: 16px;font-weight: bold;">Categories</caption>
+        <thead>
+        <tr>
+            <th>Others</th>
+            <th>Retrieve Value</th>
+            <th>Filter</th>
+            <th>Compute Derived Value</th>
+            <th>Find Extremum</th>
+            <th>Sort</th>
+            <th>Determine Range</th>
+            <th>Characterize Distribution</th>
+            <th>Find Anomalies</th>
+            <th>Cluster</th>
+            <th>Correlate</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>0</td>
+            <td>1</td>
+            <td>2</td>
+            <td>3</td>
+            <td>4</td>
+            <td>5</td>
+            <td>6</td>
+            <td>7</td>
+            <td>8</td>
+            <td>9</td>
+            <td>10</td>
+        </tr>
+        </tbody>
+    </table>
+    <!--
+    Choose Model:
+    <select id="model" style="height: 26px;">
+        <option value="1">hf_biLSTM</option>
+        <option value="0">raw_czhou</option>
+    </select>&nbsp;&nbsp;
+
+    Classification Threshold: <input type="text" value="0.3" id="threshold"> <br><br>
+    -->
+
+    <hr style="height: 2px; background-color: lightslategray;">
+    <h4>Mode One</h4>
+    Sentences: <br><textarea id="sentences" style="width: 700px;" rows="3"
+                   placeholder='This is your first sentence.&#13;&#10;This is your second sentence.'></textarea><br><br>
+    <button class="btn btn-primary ladda-button" data-style="zoom-out" id="submit_query1" onclick="classification(1)">Submit</button>
+    <div style="margin-top: 20px;">
+        Classification Result: <br><span id="result1"></span>
+    </div>
+    <hr style="height: 2px; background-color: lightslategray;">
+    <h4>Mode Two</h4>
+    <input type='file' accept='text/plain' onchange='openFile(event)'><br>
+    <div id="output"></div>
+    <button class="btn btn-primary ladda-button" data-style="zoom-out" id="submit_query2" onclick="classification(0)">Submit</button>
+    <div style="margin-top: 20px;">
+        Classification Result: <br><span id="result2"></span>
+    </div>
+    <hr style="height: 2px; background-color: lightslategray;">
+    <button class="btn btn-success" onclick="visualize_result()">Visualize Result</button><br>
+    Visualize Result: <br><span id="result3"></span><br>
+    <div id="Visualize_Result" style="width: 100%; height: 400px;"></div>
+</div>
+<script>
+    var loading1 = Ladda.create($("#submit_query1")[0]);
+    var loading2 = Ladda.create($("#submit_query2")[0]);
+    var sentences = [];
+    var openFile = function(event) {
+        let input = event.target;
+        let reader = new FileReader();
+        reader.readAsText(input.files[0]);
+        reader.onload = function() {
+            if(reader.result) {
+                //显示文件内容
+                if (this.result.includes("\r\n")){
+                    sentences = this.result.split("\r\n"); // windows 是 回车换行
+                }else if(this.result.includes("\n")){
+                    sentences = this.result.split("\n"); // linux 和 mac 是换行
+                }else if(this.result.includes("\r")){
+                    sentences = this.result.split("\r"); // 有些 mac 是回车 CR
+                }
+                $("#output").html(`<b>${sentences.length}</b> sentences have been detected.`);
+            }
+        };
+    };
+    var model_result = [];
+    var categories = ['Others', 'Retrieve Value', 'Filter', 'Compute Derived Value', 'Find Extremum', 'Sort',
+              'Determine Range', 'Characterize Distribution', 'Find Anomalies', 'Cluster', 'Correlate'];
+
+    function classification(type) {
+        try{  // "model": $("#model").val(),
+            let list = { 'csrfmiddlewaretoken': '{{ csrf_token }}' };  // "threshold": $("#threshold").val(),
+            if (type){
+                list["sentences"] = JSON.stringify($("#sentences").val().split("\n"));
+                loading1.start();
+            }else{
+                if (sentences.length === 0){
+                    alert("You haven't upload any file.");
+                    return;
+                }
+                list["sentences"] = JSON.stringify(sentences);
+                loading2.start();
+            }
+
+            $.ajax({
+                //请求方式
+                type : "POST",
+                //请求的媒体类型
+                // contentType: "application/json;charset=UTF-8",
+                //请求地址
+                url : "{% url 'get_sentences_tasks' %}",
+                //数据，json字符串
+                data : list,
+                //请求成功
+                success : function(result) {
+                    if (result.tasks){
+                        model_result = JSON.parse(result.tasks);
+                        if (type){
+                            $("#result1").text(result.tasks);
+                            loading1.stop();
+                        }else{
+                            $("#result2").text(result.tasks);
+                            loading2.stop();
+                        }
+                    }else{
+                        if (type){
+                            $("#result1").text(result.error);
+                            loading1.stop();
+                        }else{
+                            $("#result2").text(result.error);
+                            loading2.stop();
+                        }
+                    }
+                },
+                //请求失败，包含具体的错误信息
+                error : function(e){
+                    console.log(e.status);
+                    console.log(e.responseText);
+                    if (type){
+                        loading1.stop();
+                    }else{
+                        loading2.stop();
+                    }
+                }
+            });
+        }catch (e) {
+            alert(e.message);
+        }
+    }
+
+
+    function visualize_result() {
+        if (model_result.length === 0){
+            alert("The result is empty!");
+            return;
+        }
+        let ydata = Array.apply(null, {length:11}).map(()=>0);
+        model_result.forEach((item) => {
+           item.forEach((task_id) => {
+               ydata[task_id]++;
+           })
+        });
+        /*
+        for (let i = 0; i < model_result.length; i++) {
+            ydata[model_result[i]]++;
+        }
+        */
+        $("#result3").text(ydata);
+        let dom = document.getElementById("Visualize_Result");
+        echarts.dispose(dom);  // 不能在单个容器上初始化多个 ECharts 实例。
+        let myChart = echarts.init(dom);
+
+        let option = {
+            // title: {text: chart_type + " chart"},
+            tooltip: {
+                formatter: function(params){
+                    return categories[params.dataIndex]+" : "+params.value;
+                }
+            },
+            grid: {
+            },
+            xAxis: {
+                type: 'category',
+                name: 'Category',
+                nameGap: 5,
+                nameTextStyle: {
+                    fontWeight: 'bold'
+                },
+                data: ['O', 'RV', 'F', 'CDV', 'FE', 'S',
+                        'DR', 'CD', 'FA', 'Clu', 'Cor']
+            },
+            yAxis: {
+                type: "value",
+                name: "Num",
+                // nameGap: 15,  // 默认是 14
+                nameTextStyle: {
+                    fontWeight: 'bold'
+                }
+            },
+            series: [
+                {
+                    type: 'bar',
+                    label: {
+                        normal: {
+                            show: true,
+                            position: 'top'
+                        }
+                    },
+                    data: ydata
+                }
+            ]
+        };
+        if (option && typeof option === "object") {
+            myChart.setOption(option, true);
+        }
+    }
+</script>
+</body>
+</html>

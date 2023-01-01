@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+	<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <style>
+        textarea {
+            height: 28px;
+            width: 400px;
+        }
+        #textarea {
+            -moz-appearance: textfield-multiline;
+            -webkit-appearance: textarea;
+            border: 1px solid gray;
+            font: medium -moz-fixed;
+            height: 28px;
+            overflow: auto;
+            padding: 2px;
+            resize: both;
+            width: 400px;
+        }
+        input {
+            margin-top: 5px;
+            width: 400px;
+        }
+        #input {
+            -moz-appearance: textfield;
+            -webkit-appearance: textfield;
+            background-color: white;
+            background-color: -moz-field;
+            border: 1px solid darkgray;
+            box-shadow: 1px 1px 1px 0 lightgray inset;
+            font: -moz-field;
+            margin-top: 5px;
+            padding: 2px 3px;
+            width: 400px;
+        }
+    </style>
+</head>
+<body>
+<div contenteditable="true">我是一个可被编辑的DIV</div>
+<textarea>编辑区域1</textarea>
+<div id="textarea" contenteditable>编辑区域1</div>
+<input value="编辑区域2" />
+<div id="input" contenteditable onkeyup="detectWords(event)"><span style="color: red">asdfasdf</span>xxx</div>
+<script>
+    function detectWords(event){
+        console.log(event.keyCode);
+        console.log("dd");
+    }
+    $.get("https")
+</script>
+</body>
+</html>

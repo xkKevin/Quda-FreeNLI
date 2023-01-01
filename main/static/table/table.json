@@ -1,0 +1,120 @@
+{
+  "movies1.csv": {
+    "Movie": 0,
+    "Release Year": 1,
+    "Revenue": 1,
+    "Duration": 1
+  },
+  "movies2.json": {
+    "Movie": 0,
+    "Distributor": 0,
+    "Genre": 0,
+    "Budget": 1,
+    "Release Date": 0,
+    "Rating": 1,
+    "Votes": 1,
+    "US Gross": 1,
+    "Worldwide Gross": 1
+  },
+  "students.xlsx": {
+    "Name": 0,
+    "Age": 1,
+    "Sex": 0,
+    "Mid-term Exam": 1,
+    "Final Exam": 1
+  },
+  "barley.json": {
+    "Site": 0,
+    "Variety": 0,
+    "Year": 1,
+    "Yield": 1
+  },
+  "burtin.json": {
+    "Bacteria": 0,
+    "Penicillin": 1,
+    "Streptomycin": 1,
+    "Neomycin": 1,
+    "Gram_Staining": 0,
+    "Genus": 0
+  },
+  "cars.json": {
+    "Name": 0,
+    "Miles_per_Gallon": 1,
+    "Cylinders": 1,
+    "Displacement": 1,
+    "Horsepower": 1,
+    "Weight_in_lbs": 1,
+    "Acceleration": 1,
+    "Time": 0,
+    "Origin": 0
+  },
+  "crimea.json": {
+    "Time": 0,
+    "Wounds": 1,
+    "Other": 1,
+    "Disease": 1
+  },
+  "disasters.csv": {
+    "Entity": 0,
+    "Year": 1,
+    "Deaths": 1
+  },
+  "driving.json": {
+    "Side": 0,
+    "Year": 1,
+    "Miles": 1,
+    "Gas": 1
+  },
+  "flights.json": {
+    "Time": 0,
+    "Delay": 1,
+    "Distance": 1,
+    "Origin": 0,
+    "Destination": 0
+  },
+  "health-income.csv": {
+    "Country": 0,
+    "Income": 1,
+    "Health": 1,
+    "Population": 1
+  },
+  "gapminder.json": {
+    "Year": 1,
+    "Country": 0,
+    "Cluster": 0,
+    "Pop": 1,
+    "Life Expect": 1,
+    "Fertility": 1
+  },
+  "jobs.csv": {
+    "Job": 0,
+    "Sex": 0,
+    "Year": 1,
+    "Count": 1,
+    "Perc": 1
+  },
+  "us-state-capitals.json": {
+    "State": 0,
+    "City": 0,
+    "Lon": 1,
+    "Lat": 1
+  },
+  "log_freenli.csv": {
+    "Time": 0,
+    "Ip": 0,
+    "Id": 1,
+    "Location": 0
+  },
+  "log_homepage.csv": {
+    "Time": 0,
+    "Ip": 0,
+    "Id": 1,
+    "Location": 0
+  },
+  "log_api.csv": {
+    "Time": 0,
+    "Ip": 0,
+    "Id": 1,
+    "Location": 0
+  }
+}

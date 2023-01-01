@@ -1,0 +1,22 @@
+Table Reference:
+http://vega.github.io/voyager/datasets/data/barley.json
+https://github.com/vega/vega-datasets/tree/master/data
+
+bar与scatter、line需要分开
+count bug
+增加min等strategy
+
+markLine : {
+    itemStyle : {
+        normal : {
+            color:'#1e90ff',
+            label : {
+                show:true
+            }
+        }
+    },
+    data : [{type : 'average', name: '平均值'}]
+},
+markPoint: {
+    data: [{type: 'min', name: '最小值'},{type: 'max', name: '最大值'}]
+}
